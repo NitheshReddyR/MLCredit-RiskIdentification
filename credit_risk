@@ -7,21 +7,4 @@ from sklearn.ensemble import RandomForestClassifier #library for random forest
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.impute import SimpleImputer
 import seaborn as sns
-
-#loading the dataset
-data = pd.read_csv("Data1/processed_features.csv")
-data #displaying the data
-
-# loading the dataset
-import pandas as pd
-
-def main():
-    df = pd.read_csv("Data1/processed_features.csv")
-    print("Loaded shape:", df.shape)
-    print("\nFirst 5 rows:")
-    print(df.head().to_string(index=False))
-    print("\nColumns:", list(df.columns))
-
-if __name__ == "__main__":
-    main()
  
