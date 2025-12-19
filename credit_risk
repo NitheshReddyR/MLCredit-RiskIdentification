@@ -7,4 +7,181 @@ from sklearn.ensemble import RandomForestClassifier #library for random forest
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.impute import SimpleImputer
 import seaborn as sns
- 
+
+from google.colab import drive
+drive.mount('/content/drive')
+#loading the dataset
+data = pd.read_csv("/content/processed_features (2).csv")
+data #displaying the data
+data = data.drop(columns=['Status of existing checking account'])  # Removing the unique identifier
+data = pd.get_dummies(data, columns=['Credit history', 'Purpose','Savings account/bonds' ,'Present employment since','Personal status and sex', 'Other debtors / guarantors', 'Property','Other installment plans','Housing','Job','Telephone','foreign worker'])  # One-hot encoding categorical variables
+
+#Exploratory plots
+from matplotlib import pyplot as plt
+data['Present residence since'].plot(kind='line', figsize=(8, 4), title='Present residence since')
+plt.gca().spines[['top', 'right']].set_visible(False)
+
+ import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+# Load your data
+data = pd.read_csv("/content/processed_features (2).csv")
+
+# Map encoded numeric values to human-readable labels
+# You can adjust this mapping based on your dataset
+residence_mapping = {
+    0.0: '< 1 year',
+    0.3333333333333333: '1–2 years',
+    0.6666666666666666: '2–3 years',
+    1.0: '>= 4 years'
+}
+
+# Replace encoded values with readable text
+data['Present residence since'] = data['Present residence since'].map(residence_mapping)
+
+# Create pie chart
+plt.figure(figsize=(6,6))
+data['Present residence since'].value_counts().plot.pie(
+    autopct='%1.1f%%',
+    startangle=90,
+    colors=sns.color_palette('pastel'),
+    labels=data['Present residence since'].value_counts().index
+)
+plt.title('Proportion of Present Residence Duration', fontsize=14)
+plt.ylabel('')
+plt.show()
+
+
+plt.figure(figsize=(8,5))
+sns.boxplot(x='Present residence since', y='Credit amount', data=data, palette='coolwarm')
+plt.title('Credit Amount by Present Residence Duration', fontsize=14)
+plt.xlabel('Present Residence Duration')
+plt.ylabel('Credit Amount')
+plt.show()
+
+
+if 'Housing' in data.columns:
+    plt.figure(figsize=(8,5))
+    sns.barplot(x='Housing', y='Credit amount', data=data, palette='Set2', estimator='mean')
+    plt.title('Average Credit Amount by Housing Type', fontsize=14)
+    plt.ylabel('Average Credit Amount')
+    plt.xlabel('Housing Type')
+    plt.show()
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+# Loading the dataset
+data = pd.read_csv("/content/processed_features (2).csv")
+
+# Preprocessing the data (as done in previous cells)
+data = data.drop(columns=['Status of existing checking account'])  # Removing the unique identifier
+data = pd.get_dummies(data, columns=['Credit history', 'Purpose','Savings account/bonds' ,'Present employment since','Personal status and sex', 'Other debtors / guarantors', 'Property','Other installment plans','Housing','Job','Telephone','foreign worker'])  # One-hot encoding categorical variables
+
+plt.figure(figsize=(10,6))
+sns.heatmap(data.corr(numeric_only=True), annot=True, cmap='Blues', fmt='.2f')
+plt.title('Correlation Heatmap of Numeric Variables', fontsize=14)
+plt.show()
+
+if 'Present employment since' in data.columns:
+    plt.figure(figsize=(8,5))
+    sns.boxplot(x='Present employment since', y='Credit amount', data=data, palette='viridis')
+    plt.title('Credit Amount by Employment Duration', fontsize=14)
+    plt.xlabel('Employment Duration')
+    plt.ylabel('Credit Amount')
+    plt.show()
+
+plt.figure(figsize=(8,5))
+sns.scatterplot(x='Age in years', y='Credit amount', data=data, alpha=0.6)
+plt.title('Relationship Between Age and Credit Amount', fontsize=14)
+plt.xlabel('Age (scaled)')
+plt.ylabel('Credit Amount (scaled)')
+plt.show()
+
+#checking and handling missing values
+# Handling missing values with SimpleImputer
+imputer = SimpleImputer(strategy='mean')  # You can use other strategies like 'median' or 'most_frequent'
+
+
+from sklearn.impute import SimpleImputer
+import pandas as pd
+
+# Convert all boolean columns to integer (0 or 1) before imputation
+# This is crucial because SimpleImputer does not support boolean dtypes directly for most_frequent strategy.
+for col in data.columns:
+    if data[col].dtype == bool:
+        data[col] = data[col].astype(int)
+
+# Separate numeric and categorical (object/string) columns after converting booleans
+# Now, one-hot encoded columns (which were boolean) are integers and will be included in num_cols.
+num_cols = data.select_dtypes(include=['int64', 'float64']).columns
+cat_cols = data.select_dtypes(include='object').columns # Explicitly target object (string) dtypes for 'most_frequent' imputation
+
+# Imputer for numeric columns (mean)
+num_imputer = SimpleImputer(strategy='mean')
+# Ensure the index is preserved for correct concatenation
+data_num = pd.DataFrame(num_imputer.fit_transform(data[num_cols]), columns=num_cols, index=data.index)
+
+# Imputer for categorical (object/string) columns (most frequent)
+data_cat = pd.DataFrame() # Initialize as empty DataFrame
+if not cat_cols.empty: # Only apply if there are actual object-type categorical columns
+    cat_imputer = SimpleImputer(strategy='most_frequent')
+    # Ensure the index is preserved for correct concatenation
+    data_cat = pd.DataFrame(cat_imputer.fit_transform(data[cat_cols]), columns=cat_cols, index=data.index)
+
+# Combine back the imputed numeric and categorical DataFrames
+data_imputed = pd.concat([data_num, data_cat], axis=1)
+
+#spliting data into x and y
+X = data_imputed.drop(columns=['Status'])
+y = data_imputed['Status']
+
+# Apply one-hot encoding to the entire imputed dataset
+X = pd.get_dummies(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+#Random Forest Classifier
+
+#Initialise the rndom forest model
+rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+
+#model training
+rf_classifier.fit(X_train, y_train)
+
+#making predictions
+y_pred = rf_classifier.predict(X_test)
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+# Assuming you have trained your Random Forest model as `rf_classifier` and your feature names in X.columns
+importances = rf_classifier.feature_importances_
+features = X.columns
+indices = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(10,8))
+plt.barh(range(len(importances)), importances[indices], color='green')
+plt.yticks(range(len(importances)), features[indices])
+plt.xlabel('Feature Importance')
+plt.title('Random Forest Feature Importances')
+plt.gca().invert_yaxis()  # highest importance at top
+plt.tight_layout()
+plt.show()
+
+conf_matrix = confusion_matrix(y_test, y_pred, labels=y.unique())
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=y.unique(), yticklabels=y.unique())
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.title("Confusion Matrix")
+plt.show()
+
+from sklearn.metrics import classification_report
+classification_rep = classification_report(y_test, y_pred)
+print("Classification Report:\n", classification_rep)
+
